@@ -95,4 +95,6 @@
     <Copy SourceFiles="$(CoverageReport)\Summary.xml" DestinationFiles="$(ReportGeneratorSummary)"></Copy>
     <Delete Files="$(CoverageReport)\Summary.xml"></Delete>
   </Target>
+
+  <Target Name="CI" DependsOnTargets="LoadNuGetPackages;Clean;Compile;CodeCoverage;Specs"></Target>
 </Project>
