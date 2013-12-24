@@ -1,11 +1,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
-         DefaultTargets="Compile">
-
+DefaultTargets="Compile">
   <PropertyGroup>
     <Configuration>Debug</Configuration>
     <Platform>AnyCPU</Platform>
     <DefineSolutionProperties>false</DefineSolutionProperties>
- 
     <!-- General Paths -->
     <RootPath>$(MSBuildProjectDirectory)</RootPath>
     <SrcPath>$(RootPath)\src</SrcPath>
@@ -13,88 +11,42 @@
     <ToolsPath>$(RootPath)\tools</ToolsPath>
     <Packages>$(SrcPath)\packages</Packages>
 
-    <!-- MSpec -->
-    <MSpecPath>$(Packages)\Machine.Specifications.0.5.12\tools</MSpecPath>
-    <MSpecExe>mspec-clr4.exe</MSpecExe>
-    <MSpecXmlOutputFile>$(ReportsPath)\mspec-output.xml</MSpecXmlOutputFile>
-    <MSpecHtmlOutputPath>$(ReportsPath)\mspec</MSpecHtmlOutputPath>
-    <MSpecSettings></MSpecSettings>
-
-    <!-- OpenCover -->
-    <!-- The tools path for OpenCover -->
-    <OpenCoverPath>$(Packages)\OpenCover.4.5.1403</OpenCoverPath>
-    <OpenCoverExe>OpenCover.Console.exe</OpenCoverExe>
-    <OpenCoverFilter>-[*Specs*]* +[*]*</OpenCoverFilter>
-
-    <ReportGeneratorPath>$(Packages)\ReportGenerator.1.8.1.0</ReportGeneratorPath>
-    <ReportGeneratorExe>ReportGenerator.exe</ReportGeneratorExe>
-
-    <OpenCoverOutputFile>$(ReportsPath)\coverage-output.xml</OpenCoverOutputFile>
-    <CoverageReport>$(ReportsPath)\coverage</CoverageReport>
-    <ReportGeneratorSummary>$(ReportsPath)\coverage-summary.xml</ReportGeneratorSummary>
   </PropertyGroup>
   
   <!-- The Clean Target -->
   <ItemGroup>
     <ProjectFiles Include="**\*.csproj" />
   </ItemGroup>
+  
   <Target Name="Clean">
     <Message Importance="high" Text="Cleaning folders"/>
     <RemoveDir Directories="$(ReportsPath)" Condition="Exists('$(ReportsPath)')" />
     <MakeDir Directories = "$(ReportsPath);$(ReportsPath)\MSpec;$(ReportsPath)\Coverage" />
     <!-- Clean the source code projects -->
     <MSBuild Projects="@(ProjectFiles)"
-             ContinueOnError="false"
-             Targets="Clean"
-             Properties="Configuration=$(Configuration)" />
+    ContinueOnError="false"
+    Targets="Clean"
+    Properties="Configuration=$(Configuration)" />
   </Target>
   
   <!-- The LoadNuGetPackages Target -->
   <ItemGroup>
     <NuGetPackageConfigs Include="$(MSBuildStartupDirectory)\**\packages.config" />
   </ItemGroup>
+  
   <Target Name="LoadNuGetPackages">
     <Message Importance="high" Text="Retrieving packages for %(NuGetPackageConfigs.Identity)" />
     <Exec Command="&quot;$(SrcPath)\.nuget\nuget&quot; install &quot;%(NuGetPackageConfigs.Identity)&quot; -o &quot;$(SrcPath)\packages&quot;" />
   </Target>
-  
+
+
   <!-- The Compile Target -->
   <Target Name="Compile" DependsOnTargets="Clean;LoadNuGetPackages">
     <Message Importance="high" Text="Compiling core projects"/>
     <MSBuild Projects="$(SrcPath)\Console\Console.csproj"
              Properties="Configuration=$(Configuration);Platform=$(Platform)" />
-     
+
   </Target>
-
-  <Target Name="Specs" DependsOnTargets="Clean;LoadNuGetPackages;Compile">
-    <CreateItem Include="**\bin\$(Configuration)\*Specs*.dll" Exclude="**\bin\$(Configuration)\*Specs*.mm.dll">
-      <Output TaskParameter="Include" ItemName="SpecsAssemblies" />
-    </CreateItem>
-
-    <PropertyGroup>
-      <MSpecCommand>&quot;$(MSpecPath)\$(MSpecExe)&quot; $(MSpecSettings) --xml &quot;$(MSpecXmlOutputFile)&quot; --html &quot;$(MSpecHtmlOutputPath)&quot; -t &quot;@(SpecsAssemblies, '&quot; &quot;')&quot;</MSpecCommand>
-    </PropertyGroup>
-    <Message Importance="high" Text="Running Specs with this command: $(MSpecCommand)"/>
-    <Exec Command="$(MSpecCommand)" />
-  </Target>
-
-  <Target Name="CodeCoverage" DependsOnTargets="Clean;LoadNuGetPackages;Compile">
-    <CreateItem Include="**\Bin\Debug\*Specs*.dll" Exclude="**\Bin\$(Configuration)\*Specs*.mm.dll">
-      <Output TaskParameter="Include" ItemName="SpecsAssemblies" />
-    </CreateItem>
-
-    <PropertyGroup>
-      <OpenCoverCommand>&quot;$(OpenCoverPath)\$(OpenCoverExe)&quot; -register:user &quot;-target:&quot;$(MSpecPath)\$(MSpecExe)&quot;&quot; &quot;-targetargs:&quot;@(SpecsAssemblies, '&quot; &quot;')&quot;&quot; &quot;-filter:$(OpenCoverFilter)&quot; &quot;-output:$(OpenCoverOutputFile)&quot;</OpenCoverCommand>
-      <ReportGeneratorCommand>&quot;$(ReportGeneratorPath)\$(ReportGeneratorExe)&quot; &quot;-reports:$(OpenCoverOutputFile)&quot; &quot;-targetdir:$(CoverageReport)&quot; &quot;-reporttypes:html;xml&quot;</ReportGeneratorCommand>
-    </PropertyGroup>
-    <Message Importance="high" Text="Running code coverage with this command: $(OpenCoverCommand)"/>
-    <Exec Command="$(OpenCoverCommand)" />
-    <Message Importance="high" Text="Generate report with this command: $(ReportGeneratorCommand)"/>
-    <Exec Command="$(ReportGeneratorCommand)" />
-    <!-- Report Generator has no way to name the output file so rename it by copying and deleting the original file -->
-    <Copy SourceFiles="$(CoverageReport)\Summary.xml" DestinationFiles="$(ReportGeneratorSummary)"></Copy>
-    <Delete Files="$(CoverageReport)\Summary.xml"></Delete>
-  </Target>
-
-  <Target Name="CI" DependsOnTargets="LoadNuGetPackages;Clean;Compile;CodeCoverage;Specs"></Target>
+  
+  <Target Name="CI" DependsOnTargets="LoadNuGetPackages;Clean;Compile;"></Target>
 </Project>
